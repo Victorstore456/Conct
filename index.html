@@ -3,151 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel MDM - Multi-Dispositivo</title>
-    
-    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-database.js"></script>
-    
+    <title>Link Direto para SMS</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f7f6; }
-        .container { max-width: 800px; margin: 0 auto; background-color: #ffffff; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
-        h2 { color: #333; border-bottom: 2px solid #007bff; padding-bottom: 10px; margin-bottom: 20px; }
-        .device-card { 
-            border: 1px solid #ddd; padding: 15px; margin-bottom: 15px; border-radius: 6px; 
-            background-color: #e9ecef; display: flex; justify-content: space-between; align-items: center; 
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 50px;
         }
-        .device-info { flex-grow: 1; }
-        .device-actions { flex-shrink: 0; }
-        .status-info { font-size: 1.1em; font-weight: bold; margin-top: 5px; }
-        .status-bloqueado { color: #dc3545; }
-        .status-desbloqueado { color: #28a745; }
-        button { padding: 8px 12px; margin: 3px; border: none; border-radius: 5px; color: white; cursor: pointer; font-size: 0.9em; transition: background-color 0.3s; }
-        .btn-bloquear { background-color: #dc3545; }
-        .btn-desbloquear { background-color: #28a745; }
-        button:hover { opacity: 0.9; }
-        #devices-list-container { margin-top: 20px; }
-        #log-area { margin-top: 20px; padding: 10px; border: 1px solid #ccc; background-color: #fff; max-height: 100px; overflow-y: scroll; font-size: 0.8em; }
+        .sms-link {
+            display: inline-block;
+            padding: 15px 30px;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 1.2em;
+            margin-top: 20px;
+        }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <h2>Painel de Gerenciamento - Dispositivos Financiados</h2>
-        <p>Monitore e controle o status de bloqueio de todos os seus dispositivos.</p>
-        
-        <div id="devices-list-container">
-            <p>Carregando dispositivos do Firebase...</p>
-        </div>
+    <h1>Clique no Botão Abaixo para Enviar a Mensagem</h1>
+    <p>O médico do seu telefone.</p>
 
-        <h3>Log de Conexão</h3>
-        <div id="log-area">Aguardando conexão com o Firebase...</div>
-    </div>
+    <a 
+        href="sms:+258847747163?body=Ol%C3%A1%20Victor%20Solutions%2C%20preciso%20da%20vossa%20assist%C3%AAncia" 
+        class="sms-link">
+        Contactar Victor Solutions por SMS
+    </a>
 
-    <script>
-        // =================================================================
-        // CONFIGURAÇÃO REAL DO SEU PROJETO FIREBASE (mdmm-43127)
-        // =================================================================
-        const firebaseConfig = {
-            apiKey: "AIzaSyBzybWyMMOtw1osML8lfN15HnJv9f3TVzs",
-            authDomain: "mdmm-43127.firebaseapp.com",
-            databaseURL: "https://mdmm-43127-default-rtdb.firebaseio.com",
-            projectId: "mdmm-43127",
-            storageBucket: "mdmm-43127.firebasestorage.app",
-            messagingSenderId: "512188413237",
-            appId: "1:512188413237:web:ac7a6fafdf8c2e58f8c87c"
-        };
-        
-        let db;
-
-        function log(message) {
-            const logArea = document.getElementById('log-area');
-            logArea.innerHTML = `[${new Date().toLocaleTimeString()}] ${message}<br>` + logArea.innerHTML;
-        }
-
-        function initializeFirebase() {
-            try {
-                firebase.initializeApp(firebaseConfig);
-                db = firebase.database();
-                log("✅ Conexão Firebase estabelecida.");
-                
-                // Configura o listener para LER TODOS os dispositivos em tempo real
-                const allDevicesRef = db.ref('devices');
-                allDevicesRef.on('value', handleDeviceListUpdate);
-
-            } catch (error) {
-                log(`❌ ERRO FATAL de Conexão: ${error.message}. Verifique as Regras de Segurança.`);
-            }
-        }
-
-        function handleDeviceListUpdate(snapshot) {
-            const devicesData = snapshot.val();
-            const listContainer = document.getElementById('devices-list-container');
-            listContainer.innerHTML = ''; // Limpa o conteúdo anterior
-            
-            if (!devicesData) {
-                listContainer.innerHTML = '<p>Nenhum dispositivo registrado ainda no Firebase.</p>';
-                return;
-            }
-
-            // Itera sobre todos os IDs únicos (ANDROID_ID)
-            for (const deviceId in devicesData) {
-                const device = devicesData[deviceId];
-                
-                // Extrai dados
-                const status = device.status || 'N/A';
-                const modelDisplay = device.manufacturer && device.model 
-                    ? `${device.manufacturer.toUpperCase()} ${device.model}` 
-                    : 'Modelo Desconhecido';
-                
-                const statusClass = status === 'BLOQUEADO' ? 'status-bloqueado' : 'status-desbloqueado';
-                
-                // Cria o cartão HTML
-                const deviceCard = `
-                    <div class="device-card">
-                        <div class="device-info">
-                            <strong>${modelDisplay}</strong> 
-                            <small>(ID: ${deviceId.substring(0, 10)}...)</small><br>
-                            Status: <span class="status-info ${statusClass}">${status}</span>
-                        </div>
-                        <div class="device-actions">
-                            <button class="btn-bloquear" onclick="enviarComando('${deviceId}', 'BLOQUEADO')">
-                                BLOQUEAR
-                            </button>
-                            <button class="btn-desbloquear" onclick="enviarComando('${deviceId}', 'DESBLOQUEADO')">
-                                DESBLOQUEAR
-                            </button>
-                        </div>
-                    </div>
-                `;
-                
-                listContainer.innerHTML += deviceCard;
-            }
-        }
-
-        async function enviarComando(deviceId, novoStatus) {
-            if (!db) {
-                alert("Erro: Firebase não inicializado. Verifique o log.");
-                return;
-            }
-
-            const deviceRef = db.ref(`devices/${deviceId}`);
-            
-            try {
-                await deviceRef.update({
-                    status: novoStatus,
-                    timestamp: firebase.database.ServerValue.TIMESTAMP 
-                });
-                
-                log(`Comando '${novoStatus}' enviado para o ID: ${deviceId.substring(0, 10)}...`);
-                // A interface será atualizada automaticamente pelo listener 'handleDeviceListUpdate'
-                
-            } catch (error) {
-                log(`❌ Falha ao enviar comando: ${error.message}`);
-                alert('ERRO: Falha ao escrever no Firebase. Verifique as regras de segurança.');
-            }
-        }
-
-        window.onload = initializeFirebase;
-    </script>
 </body>
 </html>
